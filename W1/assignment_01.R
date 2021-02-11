@@ -14,8 +14,7 @@ friend_in_need <- leaflet() %>%
                                        "ID:", places$FeatureID,
                                        "Description:", places$Description)),
                                 clusterOptions = markerClusterOptions(),
-             labelOptions = labelOptions(textsize = "15px")) %>% 
-              %>% 
+             labelOptions = labelOptions(textsize = "30px")) %>% 
   addMiniMap() %>% 
   addMeasure()
 
