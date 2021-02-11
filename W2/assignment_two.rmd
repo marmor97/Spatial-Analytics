@@ -1,0 +1,350 @@
+---
+title: "Assignment two"
+author: "Marie Mortensen"
+date: "09/02/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Assignments for Spatial Analytics - Task description below:
+Do the following exercises and submit either completed scripts or link to Github with completed scripts.
+
+Do exercises 1 and 2 in the HW repository to explore datasets, wrangle them, and produce maps with tmap package. Use https://worker02.chcaa.au.dk/rstudio/ if you have difficulty with the spData or other packages; it has the necessary packages preloaded. Your login information is in Blackboard>Resources.
+
+Optional/Challenge: Do exercise 3 to practice map classification. Feel free to select another attribute to map besides Population. Explain your rationale.
+
+#### Exercise 1 ####
+#### Goals ####
+
+# - Modify the provided code to improve the resulting map
+
+#### Packages ####
+```{r}
+# We will use the sf, raster, and tmap packages.
+# Additionally, we will use the spData and spDataLarge packages that provide new datasets.
+# These packages have been preloaded to the worker2 workspace.
+library(sf)
+library(raster)
+library(tmap)
+library(spData)
+library(spDataLarge)
+```
+
+#### Data sets #### 
+# We will use two data sets: `nz_elev` and `nz`. They are contained by the libraries
+# The first one is an elevation raster object for the New Zealand area, and the second one is an sf object with polygons representing the 16 regions of New Zealand.
+
+#### Existing code ####
+# We wrote the code to create a new map of New Zealand.
+# Your role is to improve this map based on the suggestions below.
+```{r}
+tm_shape(nz_elev)  +
+  tm_raster(title = "elev", 
+            style = "cont",
+            palette = "BuGn") +
+  tm_shape(nz) +
+  tm_borders(col = "red", 
+             lwd = 3) +
+  tm_scale_bar(breaks = c(0, 100, 200),
+               text.size = 1) +
+  tm_compass(position = c("LEFT", "center"),
+             type = "rose", 
+             size = 2) +
+  tm_credits(text = "A. Sobotkova, 2020") +
+  tm_layout(main.title = "My map",
+            bg.color = "orange",
+            inner.margins = c(0, 0, 0, 0))
+```
+
+# Your solution
+# 1. Change the map title from "My map" to "New Zealand".
+To change the map I firstly define the new title. Afterwards, I modify the code above in the section with the argument 'tm_layout' and change main.title = "My map" to main.title = title. The plot shows the map with the new title.
+# 2. Update the map credits with your own name and today's date.
+To update credits and dates, I define a variable with my name and today's date. Afterwards, I run the code once again, having changed tm_credits(text = "A. Sobotkova, 2020") to tm_credits(text = credits)
+# 3. Change the color palette to "-RdYlGn". 
+#    (You can also try other palettes from http://colorbrewer2.org/)
+Below, I define the the new palette -RdYlGn seem to be a diverging palette which highlight extremes at both ends of a scale. I try to explore which other diverging palettes are suitable by installing the R color brewer package and printing all diverging palettes. 
+# 4. Put the north arrow in the top right corner of the map.
+This is changed by changing the option position = c("left", "center") to position = c("right", "top") in the argument tm_compass()
+# 5. Improve the legend title by adding the used units (m asl).
+To change and improve the legend I'm adding meter above sea level.
+# 6. Increase the number of breaks in the scale bar.
+Following the same procedure as above, I replace the option with breaks to my own defined variable n_breaks.
+# 7. Change the borders' color of the New Zealand's regions to black. 
+Replacing col = "red" to col = border_col in tm_borders()
+#    Decrease the line width.
+# 8. Change the background color to any color of your choice.
+I decided to change the border color to a more intuitive color, blue, representing the sea to help viewers see that it is New Zealand.
+
+```{r}
+# Title
+title <- "New Zealand"
+
+# Credits
+credits <- "M. Mortensen, February 9th, 2020"
+
+# Settling on color palette
+# Installing R color brewer
+install.packages("RColorBrewer")
+library(RColorBrewer)
+
+# Defining the original palette
+brewer_palette <- "-RdYlGn" # RdYlGn seem to be a diverging palette - minus seem to flip the scale
+
+# Reviewing other palettes
+# Choosing a purple and green alternative 
+display.brewer.all(type="div")
+brewer_palette_new <- "-PiYG"
+
+pos <- c("right", "top") # Position of compass
+legend <- "Elevation - m above sea level" # Legend
+n_breaks = c(0,50,100,150,200) # N breaks in scalebare
+border_col <- "black" # Border color
+bg_blue = "light blue" # Background color
+
+tm_shape(nz_elev)  +
+  tm_raster(title = legend, 
+            style = "cont",
+            palette = brewer_palette_new) +
+  tm_shape(nz) +
+  tm_borders(col = border_col, 
+             lwd = 3) +
+  tm_scale_bar(breaks = n_breaks,
+               text.size = 1) +
+  tm_compass(position = pos,
+             type = "rose", 
+             size = 2) +
+  tm_credits(text = credits) +
+  tm_layout(main.title = title,
+            bg.color = bg_blue,
+            inner.margins = c(0, 0, 0, 0))
+```
+
+Instead of this one could as well define a function where all variables I have defined can be used as default input.
+```{r}
+my_nz_map <- 
+  function(raster = nz_elev,
+           poly = nz, 
+           legend = "Elevation - m above sea level",
+           title = "New Zealand",
+           credits = "M. Mortensen, February 9th, 2020",
+           palette = "-PiYG", 
+           border_col = "black", 
+           n_breaks = c(0,50,100,150,200), 
+           pos = c("right", "top"),
+           bg_col = "light blue",
+          line_width = 1 ){
+  map <- tm_shape(raster)  +
+  tm_raster(title = legend, 
+            style = "cont",
+            palette = palette) +
+  tm_shape(poly) +
+  tm_borders(col = border_col, 
+             lwd = line_width) +
+  tm_scale_bar(breaks = n_breaks,
+               text.size = 1) +
+  tm_compass(position = pos,
+             type = "rose", 
+             size = 2) +
+  tm_credits(text = credits) +
+  tm_layout(main.title = title,
+            bg.color = bg_col,
+            inner.margins = c(0, 0, 0, 0))
+  return(map)} 
+```
+
+Applying the function
+```{r}
+map <- my_nz_map()
+map
+```
+
+
+#### Exercise 1b ####
+
+# 9. Read two new datasets, `srtm` and `zion`, using the code below.
+# To create a new map representing these datasets.
+
+```{r}
+srtm = raster(system.file("raster/srtm.tif", package = "spDataLarge"))
+zion = read_sf(system.file("vector/zion.gpkg", package = "spDataLarge"))
+```
+
+# Your solution
+It seems like we are dealing with a raster image of an area and a vector capturing a specific place within this area. When I apply tm_raster() with the object srtm and don't choose a style, it uses the 'pretty' method to make natural breaks as default. The default palette looks good. This seems like an appropriate method. The default palette looks good. We apply the title "Elevation" and adds an argument putting the legend outside the map. Afterwards, the vector "zion" is added with tm_shape() and border colors, linewidth, compass information are chosen. Lastly, credits and main title of the map are specified.
+```{r}
+# Inital head() and plot() and crs to get an idea of the data
+head(srtm)
+head(zion)
+
+# Displaying colors from R color brewer
+# display.brewer.all(type = "seq") # "div", "qual", "seq", or "all"
+
+
+
+tm_shape(srtm)  +
+  tm_raster(title = "Elevation") +
+  tm_layout(legend.outside = TRUE) + 
+  tm_shape(zion) +
+  tm_borders(col = "black", 
+             lwd = 1) +
+  tm_scale_bar(position = c("right", "top")) +
+  tm_compass(position = c("right", "top"),
+             type = "rose", 
+             size = 2) +
+  tm_credits(text = "M. Mortensen, February 9th 2020",
+             position = c("left", "bottom")) + # Creates a text annotation that could be used for credits or acknowledgements.
+  tm_layout(main.title = "Zion National park", # This element specifies the map layout. The main function tm_layout controls title, margins
+            inner.margins = c(0, 0, 0, 0)) # it doesnt seem like there is a need for setting margins 
+
+```
+#### Exercise 2 ####
+#### Goals ####
+
+# - Understand the provided datasets
+# - Learn how to reproject spatial data
+# - Limit your data into an area of interest
+# - Create a new map
+
+# We highlighted all parts of the R script in which you are supposed to add your
+# own code with: 
+
+#### Packages ####
+```{r}
+# We will use the sf, raster, and tmap packages.
+# Additionally, we will use the spData and spDataLarge packages that provide new datasets. 
+# These packages have been preloaded to the worker2 workspace.
+library(sf)
+library(raster)
+library(tmap)
+library(spData)
+library(spDataLarge)
+```
+
+#### Data sets #### 
+
+```{r}
+# We will use two data sets: `srtm` and `zion`.
+# The first one is an elevation raster object for the Zion National Park area, and the second one is an sf object with polygons representing borders of the Zion National Park.
+srtm <- raster(system.file("raster/srtm.tif", package = "spDataLarge"))
+zion <- read_sf(system.file("vector/zion.gpkg", package = "spDataLarge"))
+```
+
+```{r}
+# Additionally, the last exercise (IV) will used the masked version of the `lc_data` dataset.
+study_area <- read_sf("data/study_area.gpkg")
+lc_data <- raster("data/example_landscape.tif")
+lc_data_masked <- mask(crop(lc_data, study_area), study_area)
+```
+
+#### Exercise 2a ####
+
+# 1. Display the `zion` object and view its structure.
+# What can you say about the content of this file?
+# What type of data does it store? 
+Inspecting the structure of the zion object shows that it consists of a single row and 12 columns with information such as "UNIT_NAME" = Zion National Park and "UNIT_TYPE" = National Park as well as a geom column containing its coords. From this column it is clear that we are dealing with a polygon and having the other information in mind one could suggest that this is a polygon capturing the Zion National Park. 
+
+# What is the coordinate system used?
+To see the coordinate system used, we apply the function st_crs() as it is a vector. This output shows that the CRS is "UTM Zone 12, Northern Hemisphere".
+
+# How many attributes does it contain?
+Piping the object zion into attr() and selecting the class of the object, we see that it has several attributes; it is both a simple feature (sf), a tibble_dataframe, a tibble and a data.frame
+
+# What is its geometry?
+By looking selecting the column "geom" we see that it is, as mentioned, a polygon, so at least three or more pairs of coords that are connected and closed.
+
+# Your solution (type answer to the questions as code comments and the code used)
+```{r}
+# To display the structure of zion I firstly inspect the simple feature data frame 
+zion %>% head()
+zion %>% select(geom)
+
+# Coordinates system used
+zion %>% st_crs()
+
+# Attributes
+zion %>% attr("class")
+```
+
+
+# 2. Display the `srtm` object and view its structure.
+# What can you say about the content of this file? 
+# What type of data does it store?
+The srtm object has quite another structure than zion. Inspecting it with head() does not show anything else than rows with integer values. This suggests that it is a Raster object where each cell in the table contain information about the map.
+
+# What is the coordinate system used? 
+The crs() is used to find the coordinate system for Raster objects and this shows that the coordinatie system is  "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0" (an unprojected map)
+
+# How many attributes does it contain?
+Using attr(, "class") we see two attributes, "RasterLayer" and "raster"
+
+# How many dimensions does it have? 
+It seem to have 1 dimension with 457 rows and 465 columns
+
+# What is the data resolution?
+0.0008333333, 0.0008333333  (x, y)
+
+# Your solution (type answer to the questions as code comments and the code used)
+```{r}
+srtm %>% head()
+
+# Coordinates system used
+srtm %>% crs()
+
+# Attributes
+srtm %>% attr("class")
+
+# Dimensions
+srtm %>% dim()
+
+# Resolution
+srtm %>% res()
+
+
+# All this information called also be seen by simply printing the object
+srtm
+```
+
+
+#### Exercise 2b ####
+
+# 1. Reproject the `srtm` dataset into the coordinate reference system used in the `zion` object. 
+To reproject srtm into the zion coordinate system, I used crs() to access the coordinate system and projectRaster() with the zion crs to change the srtm coordinates to this.  
+# Create a new object `srtm2`
+# Vizualize the results using the `plot()` function.
+Using plot(add = T) additional layers are be added.
+# 2. Reproject the `zion` dataset into the coordinate reference system used in the `srtm` object.
+The same procedure here as above, except that instead of using projectRaster() we here deal with a simple feature and we transform this by st_transform() containing the srtm crs.
+# Create a new object `zion2`
+# Vizualize the results using the `plot()` function.
+Using plot once again. It seems like the map is more aligned in the last case.
+
+# Your solution
+```{r}
+# Changing coordinates in srtm object
+# Get the CRS from the srtm object
+zion_crs <- crs(zion, asText = TRUE) #to get the CRS as a string
+
+# Project zion to match the CRS of srtm
+srtm2 <- projectRaster(srtm, crs = zion_crs)
+
+# Plot
+plot(srtm2)
+plot(zion, add = TRUE)
+
+# Changing coordinates in zion
+srtm_crs <- crs(srtm, asText = TRUE) #to get the CRS as a string
+zion2 <- st_transform(zion, crs = srtm_crs)
+
+# Plot
+plot(srtm)
+plot(zion2, add = TRUE)
+```
+
+
+
