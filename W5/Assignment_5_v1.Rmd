@@ -1,0 +1,129 @@
+---
+title: "Assignment 5"
+author: "Marie Mortensen"
+date: "02/03/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+General instructions:
+
+- Aggregate and crop the IKONOS images if you wish to use them (I recommend using factor of 10 to downsample from 1 to 10m resolution). They are quite heavy at 2Gb a piece to work with now. Aster is not that heavy, but could use cropping as well.
+- Before extracting values from raster or measuring proximity between vector features, remember to verify CRS alignment and project to common CRS. Bulgaria sits in the UTM35N zone.
+- You can extract a lot of values for burial mounds (or burial mound neighborhoods) from the ASTER DEM. terrain() function in the raster package can help you manipulate DEM further to get slope, aspect and other values than elevation.
+- Remember inner_join, left_join and other functions that let you join non-spatial data with sf objects using a shared column.
+- Remember Rosling’s The Size Instinct and use comparison and division to keep numbers in proportion.
+More serious statistical analysis is possible but not necessary. For those who want a challenge, check out Eftimoski et al. 2017)
+
+Lib
+```{r}
+library(sf)
+library(raster)
+library(tidyverse)
+library(leaflet)
+```
+
+Download data
+```{r}
+KAZ_mounds <- st_read("data/KAZ_mounds.shp") # Mounds locations
+KAZ_mdata <- read.csv("data/KAZ_mdata.csv") # Mounds metadata
+aster_raster <- raster("data/Aster.tif") # Aster - digital elevation model for the Kazanlak Valley with 30m resolution. 
+```
+
+Inspection of CRS and cropping
+```{r}
+crs(aster_raster)
+crs(KAZ_mounds)
+```
+
+Plotting
+```{r}
+tm_shape(KAZ_mounds) + tm_dots()
+aster_raster %>% plot()
+# Raster w tmap
+library(tmap)
+tm_shape(aster_raster) + tm_raster() 
+
+# together
+tm_shape(aster_raster) + 
+  tm_raster() + tm_shape(KAZ_mounds) + tm_dots()
+```
+
+I have chosen to work with task 2 which included doing the following: 
+
+A example workflow with elevations could look like this:
+1. extract elevation values from the entire landscape and bin them in elevation categories (e.g. 400-500m, 500-600m, 600-700m, etc.). 
+2.  Consider: what defines a landscape for the purpose of this study? You may wish to crop the Aster to a smaller but representative study area but make sure you justify your selection
+3. extract elevation values from observed mound locations and review their distribution in the same bins
+4. calculate the expected number of mounds per bin if mounds were located through the landscape randomly
+5. compare the expected number with the observed one
+
+I have been able to get to point 4 but unfortunately, I did not know how to calculate exprected number of mounds or compare the expected with observed number of mounds. Sorry!
+
+Binning our aster_raster elevation values
+```{r}
+# Inspecting current range of aster raster
+aster_raster
+
+# Example of binning 
+m <- c(-100000, -50000, 1,
+       -50000, -10000, 2,
+       -10000, -5000, 3,
+       -5000, -1000, 4,
+       -1000, 0, 5,
+        0, 1000, 6,
+       1000, 2000, 7, 
+       2000, 3000, 8)
+
+# Making a matrix
+m <- matrix(m, ncol=3, byrow = T) 
+
+# Reclassifying aster raster
+aster_raster_reclass <- reclassify(aster_raster, m, right = T)
+
+# How does it look now?
+# old
+tm_shape(aster_raster) + tm_raster()  
+
+#reclassified
+tm_shape(aster_raster_reclass) + tm_raster() 
+
+# together with mounds
+tm_shape(aster_raster_reclass) + 
+  tm_raster() + tm_shape(KAZ_mounds) + tm_dots()
+```
+
+Cropping Aster image
+```{r}
+# Masking aster raster based on the area that KAZ mounds contains
+mounds_aster_masked <- crop(aster_raster_reclass, KAZ_mounds)
+test <- crop(aster_raster_reclass, KAZ_mounds)
+
+# together with mounds
+tm_shape(test) + 
+  tm_raster() + 
+  tm_shape(KAZ_mounds) + 
+  tm_dots()
+
+# Plotting each of the pixel distributions - one of the entire elevation data and one of the specific elevation data in KAZ mounds
+barplot(aster_raster_reclass,
+        main = "Number of pixels in each class")
+
+barplot(mounds_aster_masked,
+        main = "Number of pixels in each class")
+
+# There is a large change in the distribution of elevation after cropping the raster to only contain elevation data for the area with mounds. 
+```
+
+Expected number of mounds per bin if mounds were located through the landscape randomly
+```{r}
+```
+
+
+Compare the expected number with the observed one
+```{r}
+```
+
+
